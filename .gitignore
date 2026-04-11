@@ -12,6 +12,28 @@ venv/
 .DS_Store
 .idea/
 .vscode/
+*.swp
 
-# Model artifacts (uncomment paths when you save weights)
-# ml-service/artifacts/
+# Logs
+*.log
+logs/
+
+# Runtime
+*.pid
+*.out
+
+# Model artifacts
+ml-service/artifacts/
+ml-service/models/
+ml-service/checkpoints/
+
+# Data (structured handling)
+data/raw/
+data/interim/
+data/processed/
+!data/sample/
+
+# Embeddings / vectors
+*.npy
+*.npz
+*.bin

@@ -1,0 +1,7 @@
+{
+  "include": ["ml-service"],
+  "exclude": ["ml-service/.venv"],
+  "venvPath": "ml-service",
+  "venv": ".venv",
+  "pythonVersion": "3.11"
+}

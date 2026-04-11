@@ -1,0 +1,78 @@
+---
+alwaysApply: true
+---
+
+# Project: Fake News Detection System
+
+This is my **flagship portfolio project** — the most important one for landing a forward deployment / backend infrastructure role. Treat it with that weight.
+
+---
+
+# Origin & Purpose
+
+- Originated from a college seminar project on fake news detection using NLP
+- Evolved into the centerpiece of my AI backend portfolio
+- Goal: demonstrate I can build production-grade AI infrastructure in Go, not just wrap APIs
+
+---
+
+# Architecture Overview
+
+```
+Client Request
+     ↓
+[Go API Gateway]          ← main entry point, routing, auth, rate limiting
+     ↓
+[Stage 1: DeBERTa-v3-small classifier]
+     ↓
+  confidence ≥ 85%? ──YES──→ return result
+     ↓ NO
+[Stage 2: LLM + RAG fallback]
+     ├── Qdrant vector DB  ← semantic search over knowledge base
+     └── LLM reasoning     ← context-augmented classification
+     ↓
+  return result
+```
+
+**Key components:**
+- Go API Gateway — the part I own most deeply
+- Two-stage ML pipeline — Python services behind the gateway
+- Qdrant — vector database for RAG retrieval
+- 85% confidence threshold triggers the fallback
+
+---
+
+# Current Phase & Plan
+
+This follows a 10-week, 4-phase plan:
+
+| Phase | Focus |
+|-------|-------|
+| 1 | Go API Gateway — routing, middleware, handlers |
+| 2 | ML pipeline integration — calling Python services, handling responses |
+| 3 | RAG pipeline — Qdrant integration, embedding, retrieval |
+| 4 | Production hardening — observability, Docker, deployment |
+
+**Always ask me what phase I'm in if it's not clear from context** — advice changes significantly depending on phase.
+
+---
+
+# Technical Decisions Already Made
+
+- Language: Go for the gateway and orchestration layer
+- Vector DB: Qdrant
+- Classifier: DeBERTa-v3-small (Python service, not Go)
+- Fallback: LLM + RAG (Python service)
+- Confidence threshold: 85%
+
+**Don't re-litigate these choices** unless I ask. Don't suggest switching to a different vector DB, different classifier, etc.
+
+---
+
+# What Good Guidance Looks Like Here
+
+- When I'm building a new component, explain the design before helping me code it
+- Call out where my Go gateway needs to handle failures gracefully (ML services can go down)
+- Remind me about observability — logging, tracing, metrics — this is a portfolio piece, it needs to look production-grade
+- Flag when something I'm doing won't scale or will be brittle
+- This is a solo project — don't suggest team workflows or over-engineered process

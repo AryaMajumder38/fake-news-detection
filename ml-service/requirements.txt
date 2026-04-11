@@ -1,0 +1,4 @@
+# Local dev: use Python 3.11 or 3.12 (see .python-version). Avoid 3.14+ until wheels catch up.
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.4

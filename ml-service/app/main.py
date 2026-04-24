@@ -1,15 +1,40 @@
+from __future__ import annotations
+
+
 """Fake News ML microservice — Phase 1 stubs; wire DistilBERT + Qdrant later."""
 
-from __future__ import annotations
+"""Fake News ML microservice."""
+
+
 
 import hashlib
 import math
+from contextlib import asynccontextmanager
 from typing import Any
 
+import torch
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
-app = FastAPI(title="Fake News ML Service", version="0.1.0")
+MODEL_PATH = "/app/model/roberta-fakedetect"
+
+tokenizer: AutoTokenizer | None = None
+classifier: AutoModelForSequenceClassification | None = None
+
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global tokenizer, classifier
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
+    classifier = AutoModelForSequenceClassification.from_pretrained(MODEL_PATH)
+    classifier.eval()
+    print("Model loaded successfully")
+    yield
+
+
+app = FastAPI(title="Fake News ML Service", version="0.1.0", lifespan=lifespan)
 
 
 class PredictRequest(BaseModel):
@@ -104,11 +129,21 @@ def health() -> dict[str, str]:
 
 @app.post("/predict", response_model=PredictResponse)
 def predict(body: PredictRequest) -> PredictResponse:
-    conf = _stub_confidence_from_text(body.text)
-    label = _stub_label_from_text(body.text)
+    inputs= tokenizer(body.text, return_tensors="pt", truncation=True, max_length=256)
+    with torch.no_grad():
+        outputs = classifier(**inputs)
+
+    probs = torch.softmax(outputs.logits, dim=1)[0]
+    pred = torch.argmax(probs).item()
+    confidence = probs[pred].item()
+
+    label = "fake" if pred == 1 else "real"
+    if confidence < 0.85:
+        label = "uncertain"
+    
     return PredictResponse(
         label=label,
-        confidence=round(conf, 4),
+        confidence=round(confidence, 4),
         statement=body.text  # add this
     )
 

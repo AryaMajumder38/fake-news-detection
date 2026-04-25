@@ -16,6 +16,7 @@ import torch
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from app.credibility import get_credibility_score
 
 MODEL_PATH = "/app/model/roberta-fakedetect"
 
@@ -39,14 +40,16 @@ app = FastAPI(title="Fake News ML Service", version="0.1.0", lifespan=lifespan)
 
 class PredictRequest(BaseModel):
     text: str = Field(..., min_length=1, description="News text or claim to classify.")
+    source_url: str  
 
 
 class PredictResponse(BaseModel):
-    label: str = Field(..., description='One of: "fake", "real","uncertain".')
+    verdict: str = Field(..., description='One of: "fake", "real","uncertain".')
     confidence: float = Field(..., ge=0.0, le=1.0)
-    statement: str 
-    reasoning: str | None = None  # add this
-    sources: list[str] = []       # add this    
+    #statement: str 
+    #reasoning: str | None = None  # add this
+    #sources: list[str] = []       # add this 
+    credibility_score: float  # add this  
     
 
 class EmbedRequest(BaseModel):
@@ -81,7 +84,7 @@ def _stub_confidence_from_text(text: str) -> float:
     return 0.5 + 0.49 * math.sin(x * 9999)
 
 
-def _stub_label_from_text(text: str) -> str:
+def _stub_verdict_from_text(text: str) -> str:
     h = hashlib.sha256(text.encode()).digest()
     return "fake" if h[0] & 1 else "real"
 
@@ -136,15 +139,18 @@ def predict(body: PredictRequest) -> PredictResponse:
     probs = torch.softmax(outputs.logits, dim=1)[0]
     pred = torch.argmax(probs).item()
     confidence = probs[pred].item()
+    credibility_score = get_credibility_score(body.source_url)
+    
 
-    label = "fake" if pred == 1 else "real"
+    verdict = "fake" if pred == 1 else "real"
     if confidence < 0.85:
-        label = "uncertain"
+        verdict = "uncertain"
     
     return PredictResponse(
-        label=label,
+        verdict=verdict,
         confidence=round(confidence, 4),
-        statement=body.text  # add this
+        #statement=body.text , # add this
+        credibility_score=credibility_score
     )
 
 

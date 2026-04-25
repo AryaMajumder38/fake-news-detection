@@ -26,6 +26,8 @@ logs/
 ml-service/artifacts/
 ml-service/models/
 ml-service/checkpoints/
+ml-service/model/
+
 
 # Data (structured handling)
 data/raw/
@@ -37,3 +39,4 @@ data/processed/
 *.npy
 *.npz
 *.bin
+.env

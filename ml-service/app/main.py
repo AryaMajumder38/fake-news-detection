@@ -17,6 +17,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel, Field
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from app.credibility import get_credibility_score
+from ingest import ingest, upsert_to_qdrant, fetch_fact_checks, extract_topics, get_existing_topics
 
 MODEL_PATH = "/app/model/roberta-fakedetect"
 
@@ -143,7 +144,7 @@ def predict(body: PredictRequest) -> PredictResponse:
     
 
     verdict = "fake" if pred == 1 else "real"
-    if confidence < 0.85:
+    if confidence < 0.85 or credibility_score < 0.5 :
         verdict = "uncertain"
     
     return PredictResponse(
@@ -163,3 +164,36 @@ def embed(body: EmbedRequest) -> EmbedResponse:
 def search(body: SearchRequest) -> SearchResponse:
     hits = _stub_search_hits(body.query, body.top_k)
     return SearchResponse(hits=hits)
+
+
+import threading
+
+@app.post("/ingest")
+def run_ingestion():
+    def job():
+        try:
+            print("Starting ingestion...")
+
+            articles = ingest()
+            new_topics = extract_topics(articles)
+            existing_topics = get_existing_topics()
+
+            combined_topics = list(dict.fromkeys(new_topics + existing_topics))[:30]
+
+            fact_checks = fetch_fact_checks(combined_topics)
+            all_data = articles + fact_checks
+
+            upsert_to_qdrant(all_data)
+
+            print("Ingestion complete")
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+
+    threading.Thread(target=job).start()
+
+    return {
+        "status": "started",
+        "message": "Ingestion running in background"
+    }

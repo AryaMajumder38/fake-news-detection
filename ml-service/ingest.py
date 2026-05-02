@@ -1,7 +1,7 @@
 import requests
 from sentence_transformers import SentenceTransformer
 from app.rss_parser import parse_rss
-from init_qdrant import client
+
 from qdrant_client.models import PointStruct
 import os
 from dotenv import load_dotenv
@@ -9,11 +9,20 @@ from collections import Counter
 import hashlib
 import spacy
 from collections import OrderedDict
+from qdrant_client import QdrantClient
 
-load_dotenv()
+client = QdrantClient(host="qdrant", port=6333)
+
+#load_dotenv()
 GOOGLE_API_KEY = os.getenv("GOOGLE_FACT_CHECK_API_KEY")
 
-model = SentenceTransformer("all-MiniLM-L6-v2")
+model = None
+
+def get_model():
+    global model
+    if model is None:
+        model = SentenceTransformer("all-MiniLM-L6-v2")
+    return model
 
 def url_to_id(url: str) -> int:
     return int(hashlib.md5(url.encode()).hexdigest()[:8], 16)
@@ -37,7 +46,7 @@ def ingest():
         articles=parse_rss(url,source_name)
         for article in articles:
             text=article['title']+" "+(article['summary']or "")
-            embedding=model.encode(text).tolist()
+            embedding=get_model().encode(text).tolist()
             all_articles.append({
                 "text": text,
                 "embedding": embedding,
@@ -90,13 +99,18 @@ def fetch_fact_checks(topics: list[str]) -> list[dict]:
             "pageSize": 10,
             "languageCode": "en"
         }
-        response = requests.get(url, params=params)
-        data = response.json()
+        try:
+            response = requests.get(url, params=params, timeout=5)
+            response.raise_for_status()
+            data = response.json()
+        except Exception as e:
+            print(f"Fact check API failed for topic {topic}: {e}")
+            continue
         
         for claim in data.get("claims", []):
             review = claim.get("claimReview", [{}])[0]
             text=claim.get("text","")
-            embedding= model.encode(text).tolist()
+            embedding= get_model().encode(text).tolist()
             all_claims.append({
                 "text": claim.get("text", ""),
                 "embedding": embedding,

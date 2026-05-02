@@ -22,12 +22,13 @@ type MLResponse struct {
 
 // FactCheck represents a single fact-check result from Qdrant
 type FactCheck struct {
-	Title string `json:"title"`
-	URL   string `json:"url"`
-	Org   string `json:"org"`
-	Date  string `json:"date"`
+    Title     string `json:"title"`
+    URL       string `json:"url"`
+    Publisher string `json:"publisher"`
+    Published string `json:"published"`
+    Claimant  string `json:"claimant"`
+    Verdict   string `json:"verdict"`
 }
-
 // RelatedArticle represents a related real news article from Qdrant
 type RelatedArticle struct {
 	Title  string `json:"title"`

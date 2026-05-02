@@ -16,9 +16,9 @@ type Config struct {
 
 func Load() Config {
     redisURL := os.Getenv("REDIS_URL")
-    if redisURL == "" {
-        log.Fatal("REDIS_URL environment variable is not set")
-    }
+    // if redisURL == "" {
+    //     log.Fatal("REDIS_URL environment variable is not set")
+    // }
 
     mlServiceURL := os.Getenv("ML_SERVICE_URL")
     if mlServiceURL == "" {
@@ -26,19 +26,19 @@ func Load() Config {
     }
 
     apiKey := os.Getenv("API_KEY")
-    if apiKey == "" {
-        log.Fatal("API_KEY environment variable is not set")
-    }
+    // if apiKey == "" {
+    //     log.Fatal("API_KEY environment variable is not set")
+    // }
 
     openAIKey := os.Getenv("OPENAI_API_KEY")
-    if openAIKey == "" {
-        log.Fatal("OPENAI_API_KEY environment variable is not set")
-    }
+    // if openAIKey == "" {
+    //     log.Fatal("OPENAI_API_KEY environment variable is not set")
+    // }
 
     qdrantURL := os.Getenv("QDRANT_URL")
-    if qdrantURL == "" {
-        log.Fatal("QDRANT_URL environment variable is not set")
-    }
+    // if qdrantURL == "" {
+    //     log.Fatal("QDRANT_URL environment variable is not set")
+    // }
 
     port := os.Getenv("PORT")
     if port == "" {

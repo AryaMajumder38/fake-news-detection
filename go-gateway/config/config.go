@@ -3,6 +3,7 @@ package config
 import (
     "log"
     "os"
+    "github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -15,6 +16,7 @@ type Config struct {
 }
 
 func Load() Config {
+    godotenv.Load() 
     redisURL := os.Getenv("REDIS_URL")
     // if redisURL == "" {
     //     log.Fatal("REDIS_URL environment variable is not set")

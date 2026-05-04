@@ -8,17 +8,17 @@ type AnalyzeRequest struct {
 }
 
 // MLRequest is what the gateway forwards to the Python ML service
-type MLRequest struct {
-	Text string `json:"text"`
-    SourceURL string `json:"source_url"`
-}
+// type MLRequest struct {
+// 	Text string `json:"text"`
+//     SourceURL string `json:"source_url"`
+// }
 
 // MLResponse is what the Python ML service sends back
-type MLResponse struct {
-	Verdict          string  `json:"verdict"`
-	Confidence       float64 `json:"confidence"`
-	CredibilityScore float64 `json:"credibility_score"`
-}
+// type MLResponse struct {
+// 	Verdict          string  `json:"verdict"`
+// 	Confidence       float64 `json:"confidence"`
+// 	CredibilityScore float64 `json:"credibility_score"`
+// }
 
 // FactCheck represents a single fact-check result from Qdrant
 type FactCheck struct {

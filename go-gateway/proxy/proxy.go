@@ -12,7 +12,7 @@ import (
 )
 
 
-func Forward(ctx context.Context, mlURL string, req models.AnalyzeRequest) (*models.MLResponse, error) {
+func Forward(ctx context.Context, mlURL string, req models.AnalyzeRequest) (*models.AnalyzeResponse, error) {
 	data, err := json.Marshal(req)
 	if err != nil {
 		return nil, err
@@ -49,10 +49,10 @@ func Forward(ctx context.Context, mlURL string, req models.AnalyzeRequest) (*mod
 		return nil, err
 	}
 
-	var mlResp models.MLResponse
-	if err := json.Unmarshal(body, &mlResp); err != nil {
+	var AnalResp models.AnalyzeResponse
+	if err := json.Unmarshal(body, &AnalResp); err != nil {
 		return nil, err
 	}
 
-	return &mlResp, nil
+	return &AnalResp, nil
 }

@@ -15,6 +15,8 @@ services:
       - redis
     volumes:
       - ./ml-service/model:/app/model
+      - ./ml-service/app:/app/app        
+
     env_file:
       - .env
   qdrant:

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 
-"""Fake News ML microservice — Phase 1 stubs; wire DistilBERT + Qdrant later."""
+
 
 """Fake News ML microservice."""
 
@@ -18,9 +18,13 @@ from pydantic import BaseModel, Field
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from app.credibility import get_credibility_score
 from ingest import ingest, upsert_to_qdrant, fetch_fact_checks, extract_topics, get_existing_topics
+from app.rag import run_rag_pipeline
+from urllib.parse import urlparse
+import logging
 
+logging.basicConfig(level=logging.INFO)
 MODEL_PATH = "/app/model/roberta-fakedetect"
-
+logger = logging.getLogger(__name__)
 tokenizer: AutoTokenizer | None = None
 classifier: AutoModelForSequenceClassification | None = None
 
@@ -42,15 +46,22 @@ app = FastAPI(title="Fake News ML Service", version="0.1.0", lifespan=lifespan)
 class PredictRequest(BaseModel):
     text: str = Field(..., min_length=1, description="News text or claim to classify.")
     source_url: str  
+    article_date: str | None = None
 
 
 class PredictResponse(BaseModel):
-    verdict: str = Field(..., description='One of: "fake", "real","uncertain".')
-    confidence: float = Field(..., ge=0.0, le=1.0)
-    #statement: str 
-    #reasoning: str | None = None  # add this
-    #sources: list[str] = []       # add this 
-    credibility_score: float  # add this  
+    verdict: str
+    confidence: float
+    credibility_score: float
+
+    domain: str
+    article_date: str
+    stale_warning: bool
+
+    reasoning: str
+    flagged_sentences: list[str]
+    fact_checks: list[dict]
+    related_articles: list[dict]
     
 
 class EmbedRequest(BaseModel):
@@ -141,18 +152,47 @@ def predict(body: PredictRequest) -> PredictResponse:
     pred = torch.argmax(probs).item()
     confidence = probs[pred].item()
     credibility_score = get_credibility_score(body.source_url)
+    logger.info("DEBUG → confidence:", confidence, "credibility:", credibility_score)
     
 
     verdict = "fake" if pred == 1 else "real"
-    if confidence < 0.85 or credibility_score < 0.5 :
+    if confidence < 0.85 or credibility_score <= 0.6:
+        logger.info("DEBUG → RAG TRIGGERED!!")
         verdict = "uncertain"
+
+        rag_result = run_rag_pipeline(body.text)
+
+        return PredictResponse(
+            verdict=rag_result["verdict"],
+            confidence=round(confidence, 4),
+            credibility_score=credibility_score,
+
+            domain= urlparse(body.source_url).netloc,
+            article_date="",
+            stale_warning=False,
+
+            reasoning=rag_result["reasoning"],
+            flagged_sentences=rag_result["flagged_sentences"],
+            fact_checks=rag_result["fact_checks"],
+            related_articles=rag_result["related_articles"]
+        )
     
     return PredictResponse(
         verdict=verdict,
         confidence=round(confidence, 4),
-        #statement=body.text , # add this
-        credibility_score=credibility_score
+        credibility_score=credibility_score,
+
+        domain=urlparse(body.source_url).netloc,
+        article_date="",
+        stale_warning=False,
+
+        reasoning="",
+        flagged_sentences=[],
+        fact_checks=[],
+        related_articles=[]
     )
+    
+
 
 
 @app.post("/embed", response_model=EmbedResponse)

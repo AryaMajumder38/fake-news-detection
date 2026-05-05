@@ -17,7 +17,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel, Field
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from app.credibility import get_credibility_score
-from ingest import ingest, upsert_to_qdrant, fetch_fact_checks, extract_topics, get_existing_topics
+from ingest import ingest, upsert_to_qdrant, fetch_fact_checks, extract_topics, get_existing_topics,ensure_collection,COMMON_MISINFO_TOPICS
 from app.rag import run_rag_pipeline
 from urllib.parse import urlparse
 import logging
@@ -152,15 +152,16 @@ def predict(body: PredictRequest) -> PredictResponse:
     pred = torch.argmax(probs).item()
     confidence = probs[pred].item()
     credibility_score = get_credibility_score(body.source_url)
-    logger.info("DEBUG → confidence:", confidence, "credibility:", credibility_score)
+    domain_known = credibility_score != 0.4
+    logger.info(f"DEBUG → confidence:", {confidence}, "credibility:", {credibility_score})
     
 
     verdict = "fake" if pred == 1 else "real"
-    if confidence < 0.85 or credibility_score <= 0.6:
+    if confidence < 0.85 or credibility_score <= 0.4 or not domain_known:
         logger.info("DEBUG → RAG TRIGGERED!!")
         verdict = "uncertain"
 
-        rag_result = run_rag_pipeline(body.text)
+        rag_result = run_rag_pipeline(body.text,credibility_score=credibility_score,domain_known=domain_known)
 
         return PredictResponse(
             verdict=rag_result["verdict"],
@@ -214,11 +215,19 @@ def run_ingestion():
         try:
             print("Starting ingestion...")
 
+            # ✅ ALWAYS CREATE COLLECTION FIRST
+            ensure_collection()
+
             articles = ingest()
+
             new_topics = extract_topics(articles)
+
+            # ✅ SAFE NOW (won't crash even if empty)
             existing_topics = get_existing_topics()
 
-            combined_topics = list(dict.fromkeys(new_topics + existing_topics))[:30]
+            combined_topics = list(dict.fromkeys(
+                new_topics + existing_topics + COMMON_MISINFO_TOPICS
+            ))[:50]  # increased from 30 to 50 for more coverage
 
             fact_checks = fetch_fact_checks(combined_topics)
             all_data = articles + fact_checks

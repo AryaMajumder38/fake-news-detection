@@ -7,6 +7,7 @@ import (
     "log"
     "time"
 	"context"
+    "net/http"
 
     "github.com/AryaMajumder38/fake-news-detection/go-gateway/config"
     "github.com/AryaMajumder38/fake-news-detection/go-gateway/circuitbreaker"
@@ -34,6 +35,15 @@ func main() {
         Timeout:          30 * time.Second,
     })
 
+    go func() {
+        ticker := time.NewTicker(20 * time.Hour)
+        for range ticker.C {
+            http.Post(cfg.MLServiceURL+"/ingest", "application/json", nil)
+            log.Println("Scheduled ingestion triggered")
+        }
+    }()
+
     log.Println("Starting gateway...")
     server.Start(cfg, rdb, cb)
+    
 }

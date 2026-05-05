@@ -62,7 +62,7 @@ def normalize_domain(domain: str) -> str:
 def get_credibility_score(url: str) -> float:
     parsed_url = urlparse(url)
     domain = normalize_domain(parsed_url.netloc)
-    return DOMAIN_SCORES.get(domain, 0.5)
+    return DOMAIN_SCORES.get(domain, 0.4)
 
 
 if __name__ == "__main__":

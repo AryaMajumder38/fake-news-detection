@@ -318,5 +318,5 @@ def run_rag_pipeline(text: str, headline: str | None = None , credibility_score:
     text=text,
     evidence=evidence,
     credibility_score=credibility_score,
-    stale_warning=False,
+    stale_warning=stale_warning,
 )

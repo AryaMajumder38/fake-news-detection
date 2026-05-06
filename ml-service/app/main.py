@@ -24,7 +24,7 @@ from urllib.parse import urlparse
 import logging
 
 logging.basicConfig(level=logging.INFO)
-MODEL_PATH = "/app/model/roberta-fakedetect"
+MODEL_PATH = os.getenv("MODEL_NAME", "pogo38/bigbird-base-fnd-v2")
 logger = logging.getLogger(__name__)
 tokenizer: AutoTokenizer | None = None
 classifier: AutoModelForSequenceClassification | None = None
@@ -145,7 +145,7 @@ def health() -> dict[str, str]:
 
 @app.post("/predict", response_model=PredictResponse)
 def predict(body: PredictRequest) -> PredictResponse:
-    inputs= tokenizer(body.text, return_tensors="pt", truncation=True, max_length=256)
+    inputs= tokenizer(body.text, return_tensors="pt", truncation=True, max_length=4096)
     with torch.no_grad():
         outputs = classifier(**inputs)
 

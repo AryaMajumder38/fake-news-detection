@@ -1,7 +1,7 @@
 const $ = (id) => document.getElementById(id);
 
 const DEFAULTS = {
-  gatewayUrl: 'http://localhost:8080',
+  gatewayUrl: 'https://fake-news-gateway.fly.dev',
   apiKey: '',
 };
 

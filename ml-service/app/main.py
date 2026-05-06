@@ -24,17 +24,47 @@ from urllib.parse import urlparse
 import logging
 
 logging.basicConfig(level=logging.INFO)
-MODEL_PATH = os.getenv("MODEL_NAME", "pogo38/bigbird-base-fnd-v2")
+MODEL_PATH = os.getenv("MODEL_NAME") or os.getenv("MODEL_PATH") or "pogo38/bigbird-base-fnd-v2"
+# When weights are local, tokenizer files may not match installed `transformers` (e.g. extra_special_tokens
+# as a list breaks BigBirdTokenizerFast). Hub tokenizer matches these weights for pogo38/bigbird-base-fnd-v2.
+TOKENIZER_PATH = os.getenv("TOKENIZER_PATH", MODEL_PATH)
+HUB_TOKENIZER_FALLBACK = os.getenv("HUB_TOKENIZER_ID", "pogo38/bigbird-base-fnd-v2")
 logger = logging.getLogger(__name__)
 tokenizer: AutoTokenizer | None = None
 classifier: AutoModelForSequenceClassification | None = None
+
+
+def _verdict_for_pred(pred: int) -> str:
+    """Map argmax class id to API verdict using model id2label when available."""
+    cfg = classifier.config
+    labels = getattr(cfg, "id2label", None)
+    if isinstance(labels, dict):
+        raw = labels.get(pred)
+        if raw is not None:
+            s = str(raw).lower()
+            if "fake" in s:
+                return "fake"
+            if "real" in s:
+                return "real"
+    # RoBERTa-style WELFake checkpoints often use 1=fake, 0=real
+    return "real" if pred == 1 else "fake"
 
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global tokenizer, classifier
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
+    logger.info("Loading classifier from %s", MODEL_PATH)
+    try:
+        tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_PATH, use_fast=True)
+    except Exception as e:
+        logger.warning(
+            "Tokenizer from %s failed (%s); loading tokenizer from %s",
+            TOKENIZER_PATH,
+            e,
+            HUB_TOKENIZER_FALLBACK,
+        )
+        tokenizer = AutoTokenizer.from_pretrained(HUB_TOKENIZER_FALLBACK, use_fast=True)
     classifier = AutoModelForSequenceClassification.from_pretrained(MODEL_PATH)
     classifier.eval()
     print("Model loaded successfully")
@@ -145,12 +175,19 @@ def health() -> dict[str, str]:
 
 @app.post("/predict", response_model=PredictResponse)
 def predict(body: PredictRequest) -> PredictResponse:
-    inputs= tokenizer(body.text, return_tensors="pt", truncation=True, max_length=4096)
+    device = next(classifier.parameters()).device
+    inputs = tokenizer(
+        body.text,
+        return_tensors="pt",
+        truncation=True,
+        max_length=4096,
+    ).to(device)
     with torch.no_grad():
         outputs = classifier(**inputs)
 
     probs = torch.softmax(outputs.logits, dim=1)[0]
     pred = torch.argmax(probs).item()
+    logger.info(f"DEBUG → pred class: {pred}, probs: {probs.detach().cpu().tolist()}")
     confidence = probs[pred].item()
     credibility_score = get_credibility_score(body.source_url)
     domain_known = credibility_score != 0.4
@@ -158,7 +195,7 @@ def predict(body: PredictRequest) -> PredictResponse:
 
     article_date = (body.article_date or "").strip()
 
-    verdict = "fake" if pred == 1 else "real"
+    verdict = _verdict_for_pred(pred)
     if confidence < 0.85 or credibility_score <= 0.4 or not domain_known:
         logger.info("DEBUG → RAG TRIGGERED!!")
         verdict = "uncertain"

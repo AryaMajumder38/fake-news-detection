@@ -133,6 +133,10 @@ $('analyze').addEventListener('click', async () => {
     article_date: page.article_date || '',
   });
 
+  // DEBUG: exact JSON sent to POST /predict (compare to visible page / manual curl)
+  console.log('[FakeNewsCheck] POST /predict body (exact):', body);
+  console.log('[FakeNewsCheck] extraction:', page.extraction, 'text.length:', (page.text || '').length);
+
   try {
     const res = await fetch(url, {
       method: 'POST',

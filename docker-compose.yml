@@ -22,6 +22,9 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8001:8000"
+    environment:
+      # Default: local mount. Override in .env with e.g. pogo38/bigbird-base-fnd-v2 for Hub-only.
+      MODEL_NAME: ${MODEL_NAME:-/app/model/big_bard_google}
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
       interval: 10s

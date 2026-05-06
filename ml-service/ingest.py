@@ -9,13 +9,12 @@ from collections import Counter
 import hashlib
 import spacy
 from collections import OrderedDict
-from qdrant_client import QdrantClient
 from qdrant_client.models import VectorParams, Distance
+from qdrant_conn import get_qdrant_client
+
 NEWS_API_KEY = os.getenv("NEWS_API_KEY")
 
-
-
-client = QdrantClient(host="qdrant", port=6333)
+client = get_qdrant_client()
 
 #load_dotenv()
 GOOGLE_API_KEY = os.getenv("GOOGLE_FACT_CHECK_API_KEY")

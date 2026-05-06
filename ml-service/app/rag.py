@@ -5,6 +5,7 @@ from typing import Any
 
 from sentence_transformers import SentenceTransformer
 from qdrant_client import QdrantClient
+from qdrant_conn import get_qdrant_client
 from app.credibility import get_credibility_score
 from app.llm import run_llm_reasoning
 import re
@@ -29,7 +30,7 @@ def _get_embed_model() -> SentenceTransformer:
 def _get_qdrant() -> QdrantClient:
     global _qdrant
     if _qdrant is None:
-        _qdrant = QdrantClient(host="qdrant", port=6333)
+        _qdrant = get_qdrant_client()
     return _qdrant
 
 def _split_sentences(text: str) -> list[str]:

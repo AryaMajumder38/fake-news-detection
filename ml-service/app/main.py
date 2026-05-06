@@ -9,11 +9,12 @@ from __future__ import annotations
 
 import hashlib
 import math
+import os
 from contextlib import asynccontextmanager
 from typing import Any
 
 import torch
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel, Field
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from app.credibility import get_credibility_score
@@ -154,7 +155,8 @@ def predict(body: PredictRequest) -> PredictResponse:
     credibility_score = get_credibility_score(body.source_url)
     domain_known = credibility_score != 0.4
     logger.info(f"DEBUG → confidence:", {confidence}, "credibility:", {credibility_score})
-    
+
+    article_date = (body.article_date or "").strip()
 
     verdict = "fake" if pred == 1 else "real"
     if confidence < 0.85 or credibility_score <= 0.4 or not domain_known:
@@ -169,7 +171,7 @@ def predict(body: PredictRequest) -> PredictResponse:
             credibility_score=credibility_score,
 
             domain= urlparse(body.source_url).netloc,
-            article_date="",
+            article_date=article_date,
             stale_warning=False,
 
             reasoning=rag_result["reasoning"],
@@ -184,7 +186,7 @@ def predict(body: PredictRequest) -> PredictResponse:
         credibility_score=credibility_score,
 
         domain=urlparse(body.source_url).netloc,
-        article_date="",
+        article_date=article_date,
         stale_warning=False,
 
         reasoning="",
@@ -210,7 +212,11 @@ def search(body: SearchRequest) -> SearchResponse:
 import threading
 
 @app.post("/ingest")
-def run_ingestion():
+def run_ingestion(request: Request):
+    secret = (os.environ.get("INGEST_SECRET") or "").strip()
+    if secret and request.headers.get("X-Ingest-Secret") != secret:
+        raise HTTPException(status_code=401, detail="unauthorized")
+
     def job():
         try:
             print("Starting ingestion...")

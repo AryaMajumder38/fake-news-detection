@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fake News Check — Options</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 520px; margin: 24px auto; padding: 0 16px; }
+    label { display: block; margin-top: 14px; font-weight: 600; font-size: 14px; }
+    input { width: 100%; margin-top: 6px; padding: 8px 10px; font-size: 14px; border: 1px solid #ccc; border-radius: 6px; }
+    .hint { font-size: 12px; color: #555; margin-top: 4px; }
+    button { margin-top: 20px; padding: 10px 16px; font-weight: 600; border: none; border-radius: 8px; background: #0b57d0; color: #fff; cursor: pointer; }
+    #saved { margin-top: 12px; color: #137333; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <h1>Fake News Check — Options</h1>
+  <p>These values are stored in Chrome sync (or locally if sync is off).</p>
+
+  <label for="gatewayUrl">Gateway base URL</label>
+  <input type="url" id="gatewayUrl" placeholder="http://localhost:8080" autocomplete="off" />
+  <p class="hint">No trailing slash required. Add production hosts to <code>host_permissions</code> in <code>manifest.json</code>, then reload the extension.</p>
+
+  <label for="apiKey">API key (Bearer)</label>
+  <input type="password" id="apiKey" placeholder="Same as API_KEY in go-gateway/.env" autocomplete="off" />
+  <p class="hint">Portfolio/dev only. For production, use a backend that does not ship secrets in the extension.</p>
+
+  <button type="button" id="save">Save</button>
+  <p id="saved" hidden>Saved.</p>
+
+  <script src="options.js"></script>
+</body>
+</html>

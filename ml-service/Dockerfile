@@ -11,6 +11,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app ./app
 COPY init_qdrant.py .
 COPY ingest.py .
+COPY qdrant_conn.py .
 
 
 EXPOSE 8000

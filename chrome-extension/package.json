@@ -1,0 +1,13 @@
+{
+  "name": "fake-news-check-extension",
+  "private": true,
+  "scripts": {
+    "build": "esbuild src/content-main.js --bundle --outfile=content-bundle.js --format=iife --platform=browser --legal-comments=none"
+  },
+  "dependencies": {
+    "@mozilla/readability": "^0.6.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  }
+}

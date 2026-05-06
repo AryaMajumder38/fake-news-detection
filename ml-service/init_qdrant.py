@@ -1,7 +1,8 @@
-from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams
 
-client = QdrantClient(host="qdrant", port=6333)
+from qdrant_conn import get_qdrant_client
+
+client = get_qdrant_client()
 
 def init_collection():
     if client.collection_exists(collection_name="knowledge_base"):

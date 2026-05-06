@@ -15,7 +15,7 @@ import (
     "github.com/redis/go-redis/v9"
 )
 
-func analyzeHandler(cfg config.Config, cb *circuitbreaker.CircuitBreaker) http.HandlerFunc {
+func analyzeHandler(cfg config.Config, cb *circuitbreaker.CircuitBreaker, mlHTTP *http.Client) http.HandlerFunc {
     return func(w http.ResponseWriter, r *http.Request) {
         var req models.AnalyzeRequest
         if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -26,7 +26,7 @@ func analyzeHandler(cfg config.Config, cb *circuitbreaker.CircuitBreaker) http.H
         var result *models.AnalyzeResponse
 
         err := cb.Execute(func() error {
-            resp, err := proxy.Forward(r.Context(), cfg.MLServiceURL, req)
+            resp, err := proxy.Forward(r.Context(), mlHTTP, cfg.MLServiceURL, req)
             if err != nil {
                 return err
             }
@@ -45,8 +45,9 @@ func analyzeHandler(cfg config.Config, cb *circuitbreaker.CircuitBreaker) http.H
 }
 
 func Start(cfg config.Config, rdb *redis.Client, cb *circuitbreaker.CircuitBreaker) {
+    mlHTTP := &http.Client{Timeout: cfg.MLClientTimeout}
     // 1. Create handler
-    handler := analyzeHandler(cfg, cb)
+    handler := analyzeHandler(cfg, cb, mlHTTP)
 
     // 2. Wrap with middlewares (inside out)
 	var wrapped http.Handler = handler

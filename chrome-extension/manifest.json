@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Fake News Check",
+  "version": "0.1.0",
+  "description": "Analyze the current tab using the fake-news-detection gateway (POST /predict).",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Analyze this page"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "permissions": ["activeTab", "storage"],
+  "host_permissions": [
+    "http://localhost:8080/*",
+    "http://127.0.0.1:8080/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content-bundle.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

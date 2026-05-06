@@ -4,6 +4,9 @@ __pycache__/
 .venv/
 venv/
 .env
+
+# Chrome extension build
+chrome-extension/node_modules/
 *.egg-info/
 .pytest_cache/
 .mypy_cache/
@@ -21,6 +24,10 @@ logs/
 # Runtime
 *.pid
 *.out
+knowledge_base.snapshot
+
+# Local curl debugging (shell script, not JSON body)
+go-gateway/request.json
 
 # Model artifacts
 ml-service/artifacts/
@@ -39,4 +46,3 @@ data/processed/
 *.npy
 *.npz
 *.bin
-.env

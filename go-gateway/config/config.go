@@ -21,15 +21,16 @@ type Config struct {
 
 func Load() Config {
 	godotenv.Load()
-	redisURL := os.Getenv("REDIS_URL")
-    // if redisURL == "" {
-    //     log.Fatal("REDIS_URL environment variable is not set")
-    // }
 
-    mlServiceURL := os.Getenv("ML_SERVICE_URL")
-    if mlServiceURL == "" {
-        log.Fatal("ML_SERVICE_URL environment variable is not set")
-    }
+	redisURL := os.Getenv("REDIS_URL")
+	if redisURL == "" {
+		log.Fatal("REDIS_URL must be set (e.g. rediss://default:password@host:port)")
+	}
+
+	mlServiceURL := os.Getenv("ML_SERVICE_URL")
+	if mlServiceURL == "" {
+		log.Fatal("ML_SERVICE_URL environment variable is not set")
+	}
 
 	apiKey := os.Getenv("API_KEY")
 	if apiKey == "" {
@@ -45,20 +46,13 @@ func Load() Config {
 		}
 	}
 
-    openAIKey := os.Getenv("OPENAI_API_KEY")
-    // if openAIKey == "" {
-    //     log.Fatal("OPENAI_API_KEY environment variable is not set")
-    // }
+	openAIKey := os.Getenv("OPENAI_API_KEY")
+	qdrantURL := os.Getenv("QDRANT_URL")
 
-    qdrantURL := os.Getenv("QDRANT_URL")
-    // if qdrantURL == "" {
-    //     log.Fatal("QDRANT_URL environment variable is not set")
-    // }
-
-    port := os.Getenv("PORT")
-    if port == "" {
-        port = "8080" // sensible default
-    }
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
 
 	return Config{
 		RedisURL:        redisURL,

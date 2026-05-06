@@ -154,16 +154,17 @@ def _is_evidence_weak(evidence: list[dict]) -> bool:
     if not evidence:
         return True
 
-    # Check top evidence strength
-    top = evidence[0]
-
-    # If similarity too low → weak
-    if top["similarity"] < 0.4:
+    # Use the best similarity across all selected evidence, not just evidence[0].
+    # process_evidence re-orders by composite score + diversity, so evidence[0]
+    # may not be the highest-similarity hit — checking only it was a false negative.
+    best_sim = max(e["similarity"] for e in evidence)
+    if best_sim < 0.4:
         return True
 
-    # If all evidence has very low credibility
-    avg_cred = sum(e["credibility"] for e in evidence) / len(evidence)
-    if avg_cred < 0.3:
+    # Weak only when NO single item clears the credibility floor.
+    # Using the mean allowed one junk neighbour to veto a Snopes/WHO hit.
+    best_cred = max(e["credibility"] for e in evidence)
+    if best_cred < 0.3:
         return True
 
     return False

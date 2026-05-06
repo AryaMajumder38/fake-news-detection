@@ -154,7 +154,7 @@ def predict(body: PredictRequest) -> PredictResponse:
     confidence = probs[pred].item()
     credibility_score = get_credibility_score(body.source_url)
     domain_known = credibility_score != 0.4
-    logger.info(f"DEBUG → confidence:", {confidence}, "credibility:", {credibility_score})
+    logger.info(f"DEBUG → confidence: {confidence}, credibility: {credibility_score}")
 
     article_date = (body.article_date or "").strip()
 

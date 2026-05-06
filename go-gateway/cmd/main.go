@@ -19,9 +19,11 @@ func main() {
 		log.Fatal("ML_SERVICE_URL not set")
 	}
 
-	rdb := redis.NewClient(&redis.Options{
-		Addr: cfg.RedisURL,
-	})
+	redisOpt, err := redis.ParseURL(cfg.RedisURL)
+	if err != nil {
+		log.Fatalf("invalid REDIS_URL: %v", err)
+	}
+	rdb := redis.NewClient(redisOpt)
 
 	if err := rdb.Ping(context.Background()).Err(); err != nil {
 		log.Fatalf("failed to connect to redis: %v", err)
